@@ -48,7 +48,8 @@ def handler(db):
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body)))
             self.send_header('X-Content-Type-Options', 'nosniff')
-            self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'")
+            self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'")
+            self.send_header('X-Frame-Options', 'DENY')
             self.end_headers()
             self.wfile.write(body)
 
@@ -58,7 +59,8 @@ def handler(db):
             if path == '/api/health':
                 return self.send(200, {'ok': True, 'mode': 'local_fixture'})
             if path == '/api/analysis':
-                symbol = parse_qs(parsed.query).get('symbol', ['BTC'])[0].upper()
+                params = parse_qs(parsed.query, keep_blank_values=True)
+                symbol = params.get('symbol', ['BTC'])[0].strip().upper()
                 if symbol not in ASSETS:
                     return self.send(400, {'error':'Supported assets: BTC, ETH, SOL'})
                 return self.send(200, analysis(symbol))
@@ -103,6 +105,26 @@ def handler(db):
             with connect(db) as conn:
                 cur = conn.execute('INSERT INTO posts(author,body,created_at) VALUES(?,?,?)', (author,body,datetime.now(timezone.utc).isoformat()))
             return self.send(201, {'id':cur.lastrowid})
+
+        def do_DELETE(self):
+            parsed = urlparse(self.path)
+            prefix = '/api/posts/'
+            if not parsed.path.startswith(prefix):
+                return self.send(404, {'error':'Not found'})
+            origin = self.headers.get('Origin')
+            if origin and origin != 'http://' + self.headers.get('Host',''):
+                return self.send(403, {'error':'Cross-origin writes are disabled'})
+            raw_id = parsed.path[len(prefix):]
+            if not raw_id.isascii() or not raw_id.isdecimal() or len(raw_id) > 19:
+                return self.send(400, {'error':'Post id must be a positive integer'})
+            post_id = int(raw_id)
+            if not 1 <= post_id <= 9223372036854775807:
+                return self.send(400, {'error':'Post id must be a positive integer'})
+            with connect(db) as conn:
+                deleted = conn.execute('DELETE FROM posts WHERE id = ?', (post_id,)).rowcount
+            if not deleted:
+                return self.send(404, {'error':'Post not found'})
+            return self.send(200, {'deleted_id':post_id})
     return Handler
 
 

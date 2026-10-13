@@ -1,0 +1,27 @@
+{
+  "schema": "aich-demo/v1",
+  "scope": "Provider-free synthetic fixture; local SQLite note lifecycle; no live market, model, wallet or trading path.",
+  "source_commit": "215aca74f199362443bf71e53cdca9d5727f1de3",
+  "source_blobs": {
+    "app.py": "7ab505d9c2f567eb8aeaed690bb3336df8862b37",
+    "static/app.js": "e77153d17c069d0cdb69519607dd6379fa7b58cb",
+    "static/index.html": "58b41352289cb0f2bed3fb843706057ba1673da3",
+    "static/style.css": "1d5e142876cf60baf24348afeb9e050bac6e02fd",
+    "scripts/browser_e2e.mjs": "5efd49a1b892fba752cf949012b858252ce9e276",
+    "scripts/record_demo.mjs": "b2922a751f6ce807c4643830f8b4bf7724da4e3a"
+  },
+  "artifacts": {
+    "aich-workspace.gif": {
+      "bytes": 2401722,
+      "sha256": "402ffa1d5f63388fa485dcde51fbbc9b2846af319322fca23d0776f75ea6e779"
+    },
+    "aich-workspace.mp4": {
+      "bytes": 247017,
+      "sha256": "8d7f89a1d1fa690805b4d193fcfc47c25284849bd8b65eef90bbcaefd29b44f7"
+    },
+    "aich-workspace-poster.png": {
+      "bytes": 82265,
+      "sha256": "6ef943c9a1022721caf3f24276d873b70773e594c68ee063ffa0b60d9821a3af"
+    }
+  }
+}

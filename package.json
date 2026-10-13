@@ -1,0 +1,10 @@
+{
+  "name": "aich-browser-verification",
+  "private": true,
+  "scripts": {
+    "test:browser": "node scripts/browser_e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
