@@ -25,8 +25,9 @@ jobs:
       - run: npm run test:browser
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: node scripts/record_demo.mjs
+      - run: python scripts/verify_demo.py
       - uses: actions/upload-artifact@v4
         with:
-          name: aich-demo-${{ github.sha }}
+          name: aich-demo-${{ github.event.pull_request.head.sha || github.sha }}
           path: docs/demo/
           if-no-files-found: error

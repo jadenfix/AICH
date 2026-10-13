@@ -9,6 +9,8 @@ const root = new URL('..', import.meta.url).pathname;
 const output = join(root, 'docs', 'demo');
 const temporary = await mkdtemp(join(tmpdir(), 'aich-record-'));
 await mkdir(output, { recursive: true });
+const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: root, encoding: 'utf8' }).trim();
+if (dirty) throw new Error(`Refusing to record from a dirty tracked checkout:\n${dirty}`);
 
 const child = spawn('python', ['app.py', '--port', '0', '--db', join(temporary, 'workspace.sqlite3')], {
   cwd: root,
@@ -52,6 +54,10 @@ try {
   await page.getByRole('button', { name: 'Delete note by Fixture analyst' }).click();
   await page.getByText('Note deleted from your local workspace.').waitFor();
   await pause(1500);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.locator('.bottom').scrollIntoViewIfNeeded();
+  await page.getByText('No saved notes in this local workspace.', { exact: true }).waitFor();
+  await pause(1600);
   await page.screenshot({ path: join(output, 'aich-workspace-poster.png') });
   const video = page.video();
   await context.close();

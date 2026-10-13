@@ -54,6 +54,7 @@ try {
   assert.equal(await desktop.getByText(body, { exact: true }).count(), 0);
   await desktop.reload({ waitUntil: 'networkidle' });
   assert.equal(await desktop.getByText(body, { exact: true }).count(), 0);
+  await desktop.getByText('No saved notes in this local workspace.', { exact: true }).waitFor();
   await desktop.screenshot({ path: join(output, 'desktop.png'), fullPage: true });
   assert.deepEqual(pageErrors, []);
 

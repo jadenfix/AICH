@@ -16,7 +16,11 @@ function noteCard(post){
   });
   el.append(remove);return el;
 }
-async function posts(){const d=await api('/api/posts');$('posts').replaceChildren(...d.items.map(noteCard));}
+async function posts(){
+  const d=await api('/api/posts');
+  if(d.items.length){$('posts').replaceChildren(...d.items.map(noteCard));return;}
+  const empty=document.createElement('p');empty.className='empty-notes';empty.textContent='No saved notes in this local workspace.';$('posts').replaceChildren(empty);
+}
 $('asset').addEventListener('change',loadAsset);window.addEventListener('resize',chart);
 $('post-form').addEventListener('submit',async e=>{e.preventDefault();const form=e.target,button=form.querySelector('button');button.disabled=true;try{await api('/api/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.fromEntries(new FormData(form)))});form.elements.body.value='';await posts();$('post-status').textContent='Saved to your local workspace.';}catch(e){$('post-status').textContent=e.message;}finally{button.disabled=false;}});
 loadAsset();posts().catch(e=>$('post-status').textContent=e.message);api('/api/news').then(d=>$('news').replaceChildren(...d.items.map(n=>card(n.title,n.body,null,'news-item')))).catch(e=>$('error').textContent=e.message);

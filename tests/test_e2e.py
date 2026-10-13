@@ -48,7 +48,7 @@ class E2E(unittest.TestCase):
     def test_routes_and_static_content(self):
         for path,mime in [('/','text/html'),('/app.js','text/javascript'),('/style.css','text/css')]:
             with urllib.request.urlopen(self.url+path) as r:
-                self.assertEqual(r.status,200);self.assertIn(mime,r.headers['Content-Type']);self.assertIn("script-src 'self'",r.headers['Content-Security-Policy'])
+                self.assertEqual(r.status,200);self.assertIn(mime,r.headers['Content-Type']);self.assertIn("frame-ancestors 'none'",r.headers['Content-Security-Policy']);self.assertEqual(r.headers['X-Frame-Options'],'DENY')
         with self.assertRaises(urllib.error.HTTPError) as e:self.request('/../../app.py')
         self.assertEqual(e.exception.code,404)
 
@@ -68,7 +68,7 @@ class E2E(unittest.TestCase):
 
     def test_delete_validation_and_origin(self):
         _,created=self.request('/api/posts',{'author':'Researcher','body':'Keep this note'})
-        for path,expected in [('/api/posts/nope',400),('/api/posts/0',400),('/api/posts/999999',404)]:
+        for path,expected in [('/api/posts/nope',400),('/api/posts/0',400),('/api/posts/999999',404),('/api/posts/'+'9'*5000,400)]:
             with self.assertRaises(urllib.error.HTTPError) as e:
                 urllib.request.urlopen(urllib.request.Request(self.url+path,method='DELETE'),timeout=3)
             self.assertEqual(e.exception.code,expected)

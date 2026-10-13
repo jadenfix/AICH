@@ -48,7 +48,8 @@ def handler(db):
             self.send_header('Content-Type', content_type)
             self.send_header('Content-Length', str(len(body)))
             self.send_header('X-Content-Type-Options', 'nosniff')
-            self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'")
+            self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'")
+            self.send_header('X-Frame-Options', 'DENY')
             self.end_headers()
             self.wfile.write(body)
 
@@ -114,9 +115,11 @@ def handler(db):
             if origin and origin != 'http://' + self.headers.get('Host',''):
                 return self.send(403, {'error':'Cross-origin writes are disabled'})
             raw_id = parsed.path[len(prefix):]
-            if not raw_id.isdecimal() or int(raw_id) < 1:
+            if not raw_id.isascii() or not raw_id.isdecimal() or len(raw_id) > 19:
                 return self.send(400, {'error':'Post id must be a positive integer'})
             post_id = int(raw_id)
+            if not 1 <= post_id <= 9223372036854775807:
+                return self.send(400, {'error':'Post id must be a positive integer'})
             with connect(db) as conn:
                 deleted = conn.execute('DELETE FROM posts WHERE id = ?', (post_id,)).rowcount
             if not deleted:
