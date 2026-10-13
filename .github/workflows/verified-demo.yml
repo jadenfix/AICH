@@ -24,8 +24,11 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: node scripts/record_demo.mjs
-      - run: python scripts/verify_demo.py
+      - name: Record candidate demo
+        if: ${{ hashFiles('docs/demo/capture.json') == '' }}
+        run: node scripts/record_demo.mjs
+      - name: Verify published demo
+        run: python scripts/verify_demo.py
       - uses: actions/upload-artifact@v4
         with:
           name: aich-demo-${{ github.event.pull_request.head.sha || github.sha }}

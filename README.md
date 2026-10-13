@@ -16,6 +16,12 @@ Choose BTC, ETH or SOL to explore a 90-day price chart, total return, annualized
 
 ## What the demo actually does
 
+![AICH local research workflow](docs/demo/aich-workspace.gif)
+
+[Download the MP4 demo](docs/demo/aich-workspace.mp4) · [Recording receipt](docs/demo/capture.json)
+
+The recorded workflow switches between synthetic fixture assets, opens the metric methodology, saves a local SQLite note, reloads to prove persistence, deletes it, and reloads again to prove removal. The recording is pinned to the exact application source in its receipt and is checked for source drift and complete GIF/MP4 decoding in CI.
+
 The dashboard reads the same HTTP API a client can use:
 
 ```sh
