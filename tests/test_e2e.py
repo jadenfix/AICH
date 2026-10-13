@@ -30,6 +30,10 @@ class E2E(unittest.TestCase):
             self.assertEqual(status,200);self.assertEqual(len(data['prices']),90);self.assertEqual(data['source'],'synthetic_fixture');self.assertLess(data['max_drawdown_pct'],0)
         with self.assertRaises(urllib.error.HTTPError) as e:self.request('/api/analysis?symbol=FAKE')
         self.assertEqual(e.exception.code,400)
+        self.assertEqual(self.request('/api/analysis')[1]['symbol'],'BTC')
+        with self.assertRaises(urllib.error.HTTPError) as e:self.request('/api/analysis?symbol=')
+        self.assertEqual(e.exception.code,400)
+        self.assertEqual(self.request('/api/analysis?symbol=%20eth%20')[1]['symbol'],'ETH')
     def test_real_persistence_after_restart(self):
         self.request('/api/posts',{'author':'Test researcher','body':"<script>alert('x')</script>"})
         self.proc.terminate();self.proc.wait(timeout=5);self.proc.stdout.close();self.start()
@@ -47,5 +51,30 @@ class E2E(unittest.TestCase):
                 self.assertEqual(r.status,200);self.assertIn(mime,r.headers['Content-Type']);self.assertIn("script-src 'self'",r.headers['Content-Security-Policy'])
         with self.assertRaises(urllib.error.HTTPError) as e:self.request('/../../app.py')
         self.assertEqual(e.exception.code,404)
+
+    def test_delete_note_and_persist_absence_after_restart(self):
+        _,created=self.request('/api/posts',{'author':'Researcher','body':'Remove this local note'})
+        post_id=created['id']
+        req=urllib.request.Request(self.url+f'/api/posts/{post_id}',method='DELETE')
+        with urllib.request.urlopen(req,timeout=3) as r:
+            self.assertEqual(r.status,200)
+            self.assertEqual(json.loads(r.read()),{'deleted_id':post_id})
+        self.assertEqual(self.request('/api/posts')[1]['items'],[])
+        self.proc.terminate();self.proc.wait(timeout=5);self.proc.stdout.close();self.start()
+        self.assertEqual(self.request('/api/posts')[1]['items'],[])
+        with self.assertRaises(urllib.error.HTTPError) as e:
+            urllib.request.urlopen(urllib.request.Request(self.url+f'/api/posts/{post_id}',method='DELETE'),timeout=3)
+        self.assertEqual(e.exception.code,404)
+
+    def test_delete_validation_and_origin(self):
+        _,created=self.request('/api/posts',{'author':'Researcher','body':'Keep this note'})
+        for path,expected in [('/api/posts/nope',400),('/api/posts/0',400),('/api/posts/999999',404)]:
+            with self.assertRaises(urllib.error.HTTPError) as e:
+                urllib.request.urlopen(urllib.request.Request(self.url+path,method='DELETE'),timeout=3)
+            self.assertEqual(e.exception.code,expected)
+        req=urllib.request.Request(self.url+f"/api/posts/{created['id']}",method='DELETE',headers={'Origin':'https://evil.example'})
+        with self.assertRaises(urllib.error.HTTPError) as e:urllib.request.urlopen(req,timeout=3)
+        self.assertEqual(e.exception.code,403)
+        self.assertEqual(len(self.request('/api/posts')[1]['items']),1)
 
 if __name__=='__main__':unittest.main()
